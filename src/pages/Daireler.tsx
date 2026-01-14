@@ -32,6 +32,7 @@ import { Plus, Search, Phone, User, Home, Building2 } from "lucide-react";
 
 interface Apartment {
   id: string;
+  block: string;
   number: string;
   floor: number;
   residentName: string;
@@ -41,27 +42,33 @@ interface Apartment {
   notes: string;
 }
 
+const blocks = ["A", "B", "C"];
+
 const initialApartments: Apartment[] = [
-  { id: "1", number: "1", floor: 1, residentName: "Ahmet Yılmaz", residentType: "owner", phone: "0532 111 2233", duesStatus: "paid", notes: "" },
-  { id: "2", number: "2", floor: 1, residentName: "Mehmet Kaya", residentType: "tenant", phone: "0533 222 3344", duesStatus: "paid", notes: "Kiracı, 2 yıllık sözleşme" },
-  { id: "3", number: "3", floor: 1, residentName: "Ayşe Demir", residentType: "owner", phone: "0534 333 4455", duesStatus: "unpaid", notes: "" },
-  { id: "4", number: "4", floor: 2, residentName: "Fatma Çelik", residentType: "owner", phone: "0535 444 5566", duesStatus: "paid", notes: "" },
-  { id: "5", number: "5", floor: 2, residentName: "Ali Yıldız", residentType: "tenant", phone: "0536 555 6677", duesStatus: "unpaid", notes: "Yeni taşındı" },
-  { id: "6", number: "6", floor: 2, residentName: "Hasan Öz", residentType: "owner", phone: "0537 666 7788", duesStatus: "paid", notes: "" },
-  { id: "7", number: "7", floor: 3, residentName: "Zeynep Ak", residentType: "owner", phone: "0538 777 8899", duesStatus: "paid", notes: "" },
-  { id: "8", number: "8", floor: 3, residentName: "", residentType: "owner", phone: "", duesStatus: "unpaid", notes: "Boş daire" },
+  { id: "1", block: "A", number: "1", floor: 1, residentName: "Ahmet Yılmaz", residentType: "owner", phone: "0532 111 2233", duesStatus: "paid", notes: "" },
+  { id: "2", block: "A", number: "2", floor: 1, residentName: "Mehmet Kaya", residentType: "tenant", phone: "0533 222 3344", duesStatus: "paid", notes: "Kiracı, 2 yıllık sözleşme" },
+  { id: "3", block: "A", number: "3", floor: 1, residentName: "Ayşe Demir", residentType: "owner", phone: "0534 333 4455", duesStatus: "unpaid", notes: "" },
+  { id: "4", block: "A", number: "4", floor: 2, residentName: "Fatma Çelik", residentType: "owner", phone: "0535 444 5566", duesStatus: "paid", notes: "" },
+  { id: "5", block: "B", number: "1", floor: 1, residentName: "Ali Yıldız", residentType: "tenant", phone: "0536 555 6677", duesStatus: "unpaid", notes: "Yeni taşındı" },
+  { id: "6", block: "B", number: "2", floor: 1, residentName: "Hasan Öz", residentType: "owner", phone: "0537 666 7788", duesStatus: "paid", notes: "" },
+  { id: "7", block: "B", number: "3", floor: 2, residentName: "Zeynep Ak", residentType: "owner", phone: "0538 777 8899", duesStatus: "paid", notes: "" },
+  { id: "8", block: "C", number: "1", floor: 1, residentName: "", residentType: "owner", phone: "", duesStatus: "unpaid", notes: "Boş daire" },
 ];
 
 export default function Daireler() {
   const [apartments, setApartments] = useState<Apartment[]>(initialApartments);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterBlock, setFilterBlock] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const filteredApartments = apartments.filter(
-    (apt) =>
+  const filteredApartments = apartments.filter((apt) => {
+    const matchesSearch =
       apt.number.includes(searchTerm) ||
-      apt.residentName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      apt.block.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      apt.residentName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesBlock = filterBlock === "all" || apt.block === filterBlock;
+    return matchesSearch && matchesBlock;
+  });
 
   return (
     <MainLayout>
@@ -88,6 +95,21 @@ export default function Daireler() {
                 <DialogTitle>Yeni Daire Ekle</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="block">Blok</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Blok seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {blocks.map((block) => (
+                        <SelectItem key={block} value={block}>
+                          {block} Blok
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="number">Daire No</Label>
@@ -128,17 +150,33 @@ export default function Daireler() {
           </Dialog>
         </div>
 
-        {/* Search */}
+        {/* Search & Filter */}
         <Card className="shadow-card border-border/50">
           <CardContent className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Daire no veya isim ile ara..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Blok, daire no veya isim ile ara..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={filterBlock} onValueChange={setFilterBlock}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Blok" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tüm Bloklar</SelectItem>
+                  {blocks.map((block) => (
+                    <SelectItem key={block} value={block}>
+                      {block} Blok
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -201,6 +239,7 @@ export default function Daireler() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Blok</TableHead>
                     <TableHead>Daire</TableHead>
                     <TableHead>Kat</TableHead>
                     <TableHead>Sakin</TableHead>
@@ -213,7 +252,12 @@ export default function Daireler() {
                 <TableBody>
                   {filteredApartments.map((apt) => (
                     <TableRow key={apt.id} className="cursor-pointer hover:bg-muted/50">
-                      <TableCell className="font-medium">{apt.number}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-semibold">
+                          {apt.block} Blok
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">Daire {apt.number}</TableCell>
                       <TableCell>{apt.floor}. Kat</TableCell>
                       <TableCell>
                         {apt.residentName || (
